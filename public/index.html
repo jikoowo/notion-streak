@@ -124,16 +124,18 @@
           <div class="updated">Updated at ${time}</div>
         `;
 
-        // 🎯 QUICK-TESTING BREAKPOINTS (UPDATED FOR TIER 4)
+// 🎯 QUICK-TESTING BREAKPOINTS (UPDATED FOR NEW MILESTONES)
         if (streak > 0) {
           let jsonPath = '/flame-1.json'; 
 
-          if (streak >= 4) {
+          if (streak >= 20) {
             jsonPath = '/flame-4.json';   
-          } else if (streak === 3) {
+          } else if (streak >= 10) {
             jsonPath = '/flame-3.json';   
-          } else if (streak === 2) {
+          } else if (streak >= 5) {
             jsonPath = '/flame-2.json';   
+          } else {
+            jsonPath = '/flame-1.json';
           }
 
           const container = document.getElementById('lottie-fire');
@@ -146,7 +148,7 @@
             path: jsonPath
           });
 
-          /* 🚀 Trigger the CSS transition curve exactly when the vector artwork is ready */
+          /* Trigger the CSS transition curve exactly when the vector artwork is ready */
           currentLottieInstance.addEventListener('DOMLoaded', () => {
             container.classList.add('loaded');
           });
