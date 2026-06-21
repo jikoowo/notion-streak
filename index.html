@@ -1,1 +1,106 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Win Streak</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f0f;
+      color: #fff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 28px 32px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+    .label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #555; margin-bottom: 8px; }
+    .streak-number { font-size: 72px; font-weight: 800; line-height: 1; color: #fff; transition: color 0.3s; }
+    .streak-number.hot { color: #f59e0b; }
+    .streak-number.zero { color: #444; }
+    .streak-unit { font-size: 14px; color: #555; margin-top: 6px; margin-bottom: 24px; }
+    .fire { font-size: 28px; display: inline-block; margin-bottom: 4px; min-height: 36px; }
+    .divider { border: none; border-top: 1px solid #2a2a2a; margin: 20px 0; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat { display: flex; flex-direction: column; gap: 4px; }
+    .stat-value { font-size: 20px; font-weight: 700; color: #fff; }
+    .stat-value.green { color: #22c55e; }
+    .stat-value.red   { color: #ef4444; }
+    .stat-value.gold  { color: #f59e0b; }
+    .stat-label { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.08em; }
+    .last-badge { display: inline-block; margin-top: 16px; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+    .last-badge.win { background: #14532d; color: #4ade80; }
+    .last-badge.loss { background: #450a0a; color: #f87171; }
+    .last-badge.breakeven { background: #1c1917; color: #a8a29e; }
+    .refresh-btn { margin-top: 20px; background: none; border: 1px solid #2a2a2a; color: #555; font-size: 11px; padding: 6px 14px; border-radius: 99px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.06em; }
+    .refresh-btn:hover { border-color: #444; color: #888; }
+    .error { color: #ef4444; font-size: 13px; padding: 12px; }
+    .loading { color: #444; font-size: 13px; padding: 20px; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .updated { margin-top: 12px; font-size: 10px; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="loading">Loading streak...</div>
+  </div>
+  <script>
+    const API_URL = "/api/streak";
+    async function load() {
+      const card = document.getElementById("card");
+      card.innerHTML = `<div class="loading">Loading streak...</div>`;
+      try {
+        const res = await fetch(API_URL);
+        const d = await res.json();
+        if (d.error) throw new Error(d.error);
+        const streak = d.currentStreak;
+        const isHot = streak >= 3;
+        const fireEmoji = streak === 0 ? "" : streak >= 5 ? "🔥🔥🔥" : streak >= 3 ? "🔥🔥" : "🔥";
+        const lastClass = d.lastResult === "Win" ? "win" : d.lastResult === "Loss" ? "loss" : "breakeven";
+        const lastLabel = d.lastResult || "—";
+        const now = new Date();
+        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        card.innerHTML = `
+          <div class="label">Win Streak</div>
+          <div class="fire">${fireEmoji}</div>
+          <div class="streak-number ${streak === 0 ? 'zero' : isHot ? 'hot' : ''}">${streak}</div>
+          <div class="streak-unit">consecutive win${streak !== 1 ? 's' : ''}</div>
+          <hr class="divider"/>
+          <div class="stats">
+            <div class="stat"><span class="stat-value green">${d.wins}</span><span class="stat-label">Wins</span></div>
+            <div class="stat"><span class="stat-value red">${d.losses}</span><span class="stat-label">Losses</span></div>
+            <div class="stat"><span class="stat-value">${d.breakevens}</span><span class="stat-label">BE</span></div>
+            <div class="stat"><span class="stat-value gold">${d.bestStreak}</span><span class="stat-label">Best</span></div>
+          </div>
+          <hr class="divider"/>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:11px;color:#444;">Win Rate</span>
+            <span style="font-size:14px;font-weight:700;color:#fff;">${d.winRate}%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+            <span style="font-size:11px;color:#444;">Last Trade</span>
+            <span class="last-badge ${lastClass}">${lastLabel.toUpperCase()}</span>
+          </div>
+          <button class="refresh-btn" onclick="load()">↻ REFRESH</button>
+          <div class="updated">Updated at ${time}</div>
+        `;
+      } catch (e) {
+        card.innerHTML = `<div class="error">⚠️ ${e.message}<br><br><button class="refresh-btn" onclick="load()">Retry</button></div>`;
+      }
+    }
+    load();
+    setInterval(load, 5 * 60 * 1000);
+  </script>
+</body>
+</html>
