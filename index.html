@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Win Streak</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -30,7 +31,17 @@
     .streak-number.hot { color: #f59e0b; }
     .streak-number.zero { color: #444; }
     .streak-unit { font-size: 14px; color: #555; margin-top: 6px; margin-bottom: 24px; }
-    .fire { font-size: 28px; display: inline-block; margin-bottom: 4px; min-height: 36px; }
+    
+    /* Replaced old .fire style with an optimal bounding box for the JSON vector animations */
+    .animation-container { 
+      width: 72px; 
+      height: 72px; 
+      margin: 0 auto 4px; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
     .divider { border: none; border-top: 1px solid #2a2a2a; margin: 20px 0; }
     .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     .stat { display: flex; flex-direction: column; gap: 4px; }
@@ -57,7 +68,15 @@
   </div>
   <script>
     const API_URL = "/api/streak";
+    let currentLottieInstance = null; // Track instances cleanly to prevent background lagging loops
+
     async function load() {
+      // Safely kill previous animation processes before updating HTML content
+      if (currentLottieInstance) {
+        currentLottieInstance.destroy();
+        currentLottieInstance = null;
+      }
+
       const card = document.getElementById("card");
       card.innerHTML = `<div class="loading">Loading streak...</div>`;
       try {
@@ -66,14 +85,14 @@
         if (d.error) throw new Error(d.error);
         const streak = d.currentStreak;
         const isHot = streak >= 3;
-        const fireEmoji = streak === 0 ? "" : streak >= 5 ? "🔥🔥🔥" : streak >= 3 ? "🔥🔥" : "🔥";
         const lastClass = d.lastResult === "Win" ? "win" : d.lastResult === "Loss" ? "loss" : "breakeven";
         const lastLabel = d.lastResult || "—";
         const now = new Date();
         const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
         card.innerHTML = `
           <div class="label">Win Streak</div>
-          <div class="fire">${fireEmoji}</div>
+          <div class="animation-container" id="lottie-fire"></div>
           <div class="streak-number ${streak === 0 ? 'zero' : isHot ? 'hot' : ''}">${streak}</div>
           <div class="streak-unit">consecutive win${streak !== 1 ? 's' : ''}</div>
           <hr class="divider"/>
@@ -95,6 +114,25 @@
           <button class="refresh-btn" onclick="load()">↻ REFRESH</button>
           <div class="updated">Updated at ${time}</div>
         `;
+
+        // 🎯 3-TIER STREAK PROGRESSION LOGIC (EXACT REPO FILENAMES)
+        if (streak > 0) {
+          let jsonPath = '/flame-1.json'; // Tier 1: 1 - 9 Wins
+
+          if (streak >= 30) {
+            jsonPath = '/flame-3.json';   // Tier 3: 30 - 50+ Wins
+          } else if (streak >= 10) {
+            jsonPath = '/flame-2.json';   // Tier 2: 10 - 29 Wins
+          }
+
+          currentLottieInstance = lottie.loadAnimation({
+            container: document.getElementById('lottie-fire'),
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: jsonPath
+          });
+        }
       } catch (e) {
         card.innerHTML = `<div class="error">⚠️ ${e.message}<br><br><button class="refresh-btn" onclick="load()">Retry</button></div>`;
       }
