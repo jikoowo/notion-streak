@@ -1,13 +1,15 @@
 {
   "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/streak",
-      "destination": "/api/streak.js"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/$1"
-    }
+  "builds": [
+    { "src": "api/streak.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/streak", "dest": "api/streak.js" },
+    { "src": "/flame-1.json", "dest": "public/flame-1.json" },
+    { "src": "/flame-2.json", "dest": "public/flame-2.json" },
+    { "src": "/flame-3.json", "dest": "public/flame-3.json" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
