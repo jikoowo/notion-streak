@@ -20,16 +20,15 @@ export default async function handler(req, res) {
         ...(cursor ? { start_cursor: cursor } : {}),
       };
 
+      // Updated to the modern data_sources endpoint and 2025 version to support ntn_ tokens
       const response = await fetch(
-        `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
+        `https://api.notion.com/v1/data_sources/${DATABASE_ID}/query`,
         {
           method: "POST",
           headers: {
-            headers: {
-  Authorization: `Bearer ${NOTION_TOKEN}`,
-  "Notion-Version": "2022-06-28", // Change this from 2025-09-03
-  "Content-Type": "application/json",
-},
+            Authorization: `Bearer ${NOTION_TOKEN}`,
+            "Notion-Version": "2025-09-03",
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(body),
         }
