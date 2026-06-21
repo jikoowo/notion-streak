@@ -25,9 +25,11 @@ export default async function handler(req, res) {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${NOTION_TOKEN}`,
-            "Notion-Version": "2025-09-03",
-            "Content-Type": "application/json",
+            headers: {
+  Authorization: `Bearer ${NOTION_TOKEN}`,
+  "Notion-Version": "2022-06-28", // Change this from 2025-09-03
+  "Content-Type": "application/json",
+},
           },
           body: JSON.stringify(body),
         }
