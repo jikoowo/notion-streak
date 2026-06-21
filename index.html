@@ -32,7 +32,6 @@
     .streak-number.zero { color: #444; }
     .streak-unit { font-size: 14px; color: #555; margin-top: 6px; margin-bottom: 24px; }
     
-    /* Replaced old .fire style with an optimal bounding box for the JSON vector animations */
     .animation-container { 
       width: 72px; 
       height: 72px; 
@@ -68,10 +67,9 @@
   </div>
   <script>
     const API_URL = "/api/streak";
-    let currentLottieInstance = null; // Track instances cleanly to prevent background lagging loops
+    let currentLottieInstance = null;
 
     async function load() {
-      // Safely kill previous animation processes before updating HTML content
       if (currentLottieInstance) {
         currentLottieInstance.destroy();
         currentLottieInstance = null;
@@ -115,14 +113,14 @@
           <div class="updated">Updated at ${time}</div>
         `;
 
-        // 🎯 UPDATED PROGRESSION LOGIC (ALIGNED TO YOUR MILESTONES)
+        // 🎯 QUICK-TESTING PROGRESSION LOGIC
         if (streak > 0) {
-          let jsonPath = '/flame-1.json'; // Tier 1: 1 - 14 Wins
+          let jsonPath = '/flame-1.json'; // Tier 1: Streak of exactly 1
 
-          if (streak >= 50) {
-            jsonPath = '/flame-3.json';   // Tier 3: 50+ Wins
-          } else if (streak >= 15) {
-            jsonPath = '/flame-2.json';   // Tier 2: 15 - 49 Wins
+          if (streak >= 3) {
+            jsonPath = '/flame-3.json';   // Tier 3: Streak of 3 or higher
+          } else if (streak === 2) {
+            jsonPath = '/flame-2.json';   // Tier 2: Streak of exactly 2
           }
 
           currentLottieInstance = lottie.loadAnimation({
