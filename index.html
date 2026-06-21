@@ -113,14 +113,14 @@
           <div class="updated">Updated at ${time}</div>
         `;
 
-        // 🎯 QUICK-TESTING PROGRESSION LOGIC
+        // 🎯 QUICK-TESTING BREAKPOINTS
         if (streak > 0) {
-          let jsonPath = '/flame-1.json'; // Tier 1: Streak of exactly 1
+          let jsonPath = '/flame-1.json'; 
 
           if (streak >= 3) {
-            jsonPath = '/flame-3.json';   // Tier 3: Streak of 3 or higher
+            jsonPath = '/flame-3.json';   
           } else if (streak === 2) {
-            jsonPath = '/flame-2.json';   // Tier 2: Streak of exactly 2
+            jsonPath = '/flame-2.json';   
           }
 
           currentLottieInstance = lottie.loadAnimation({
