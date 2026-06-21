@@ -20,7 +20,6 @@ export default async function handler(req, res) {
         ...(cursor ? { start_cursor: cursor } : {}),
       };
 
-      // Updated to the modern data_sources endpoint and 2025 version to support ntn_ tokens
       const response = await fetch(
         `https://api.notion.com/v1/data_sources/${DATABASE_ID}/query`,
         {
@@ -44,11 +43,31 @@ export default async function handler(req, res) {
       cursor = data.has_more ? data.next_cursor : undefined;
     } while (cursor);
 
-    const results = allResults
+    // ====================================================================
+    // CRITICAL FIX: Sort by Date and Entry Time (EST) chronologically
+    // ====================================================================
+    const sortedPages = allResults.sort((a, b) => {
+      const dateA = a.properties?.Date?.date?.start || "";
+      const dateB = b.properties?.Date?.date?.start || "";
+
+      // Look at your 'Entry Time (EST)' rich text property
+      const timeA = a.properties?.['Entry Time (EST)']?.rich_text?.[0]?.plain_text || "12:00 AM";
+      const timeB = b.properties?.['Entry Time (EST)']?.rich_text?.[0]?.plain_text || "12:00 AM";
+
+      const dateTimeA = new Date(`${dateA} ${timeA}`);
+      const dateTimeB = new Date(`${dateB} ${timeB}`);
+
+      return dateTimeA - dateTimeB; // Oldest trade to newest trade
+    });
+
+    // Extract the ordered results array (handling both "Breakeven" and your CSV column notation "BE")
+    const results = sortedPages
       .map((page) => {
         const prop = page.properties?.Result;
         if (!prop) return null;
-        return prop.select?.name || prop.status?.name || null;
+        let val = prop.select?.name || prop.status?.name || null;
+        if (val === "BE") val = "Breakeven"; // Map shorthand "BE" to "Breakeven" if used interchangeably
+        return val;
       })
       .filter(Boolean);
 
@@ -58,6 +77,7 @@ export default async function handler(req, res) {
     let losses = 0;
     let breakevens = 0;
 
+    // Process from oldest to newest to compute win rates and your absolute best historical streak
     for (const result of results) {
       if (result === "Win") {
         wins++;
@@ -71,10 +91,14 @@ export default async function handler(req, res) {
       }
     }
 
+    // Dynamic Current Streak calculation counting backward from your absolute latest chronologically completed trade
     let currentStreak = 0;
     for (let i = results.length - 1; i >= 0; i--) {
-      if (results[i] === "Win") currentStreak++;
-      else if (results[i] === "Loss") break;
+      if (results[i] === "Win") {
+        currentStreak++;
+      } else if (results[i] === "Loss") {
+        break; // Stop counting as soon as an intraday loss hits!
+      }
     }
 
     const total = wins + losses + breakevens;
@@ -82,7 +106,14 @@ export default async function handler(req, res) {
     const lastResult = results[results.length - 1] || null;
 
     return res.status(200).json({
-      currentStreak, bestStreak, wins, losses, breakevens, total, winRate, lastResult,
+      currentStreak,
+      bestStreak,
+      wins,
+      losses,
+      breakevens,
+      total,
+      winRate,
+      lastResult,
     });
   } catch (e) {
     return res.status(500).json({ error: e.message });
