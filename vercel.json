@@ -1,11 +1,15 @@
 {
+  "deploymentProtection": {
+    "preview": false,
+    "production": false
+  },
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
         {
-          "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://*.notion.so https://notion.so;"
+          "key": "X-Frame-Options",
+          "value": "ALLOWALL"
         },
         {
           "key": "Access-Control-Allow-Origin",
