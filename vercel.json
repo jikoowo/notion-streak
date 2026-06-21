@@ -2,7 +2,13 @@
   "version": 2,
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/api/streak", "destination": "/api/streak.js" },
-    { "source": "/(.*)", "destination": "/$1" }
+    {
+      "source": "/api/streak",
+      "destination": "/api/streak.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
