@@ -115,14 +115,14 @@
           <div class="updated">Updated at ${time}</div>
         `;
 
-        // 🎯 3-TIER STREAK PROGRESSION LOGIC (EXACT REPO FILENAMES)
+        // 🎯 UPDATED PROGRESSION LOGIC (ALIGNED TO YOUR MILESTONES)
         if (streak > 0) {
-          let jsonPath = '/flame-1.json'; // Tier 1: 1 - 9 Wins
+          let jsonPath = '/flame-1.json'; // Tier 1: 1 - 14 Wins
 
-          if (streak >= 30) {
-            jsonPath = '/flame-3.json';   // Tier 3: 30 - 50+ Wins
-          } else if (streak >= 10) {
-            jsonPath = '/flame-2.json';   // Tier 2: 10 - 29 Wins
+          if (streak >= 50) {
+            jsonPath = '/flame-3.json';   // Tier 3: 50+ Wins
+          } else if (streak >= 15) {
+            jsonPath = '/flame-2.json';   // Tier 2: 15 - 49 Wins
           }
 
           currentLottieInstance = lottie.loadAnimation({
