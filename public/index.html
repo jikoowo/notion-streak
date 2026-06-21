@@ -113,11 +113,13 @@
           <div class="updated">Updated at ${time}</div>
         `;
 
-        // 🎯 QUICK-TESTING BREAKPOINTS
+// 🎯 QUICK-TESTING BREAKPOINTS
         if (streak > 0) {
           let jsonPath = '/flame-1.json'; 
 
-          if (streak >= 3) {
+          if (streak >= 4) {
+            jsonPath = '/flame-4.json';   
+          } else if (streak === 3) {
             jsonPath = '/flame-3.json';   
           } else if (streak === 2) {
             jsonPath = '/flame-2.json';   
