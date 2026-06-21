@@ -1,8 +1,4 @@
 {
-  "deploymentProtection": {
-    "preview": false,
-    "production": false
-  },
   "headers": [
     {
       "source": "/(.*)",
