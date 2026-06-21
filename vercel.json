@@ -1,17 +1,13 @@
 {
-  "headers": [
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/streak",
+      "destination": "/api/streak.js"
+    },
     {
       "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Frame-Options",
-          "value": "ALLOWALL"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
+      "destination": "/$1"
     }
   ]
 }
