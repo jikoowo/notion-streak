@@ -1,11 +1,12 @@
 const NOTION_TOKEN = process.env.NOTION_TOKEN;
 const FORWARD_DB_ID = process.env.NOTION_FORWARD_DB_ID;
+const EDGE_CONFIG_ID = process.env.EDGE_CONFIG_ID;
+const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 
 const ACCOUNT_START = 50000;
 const PROFIT_TARGET = 3000;
 const MAX_DRAWDOWN = 2000;
 const RISK_PER_TRADE = 500;
-const CONSISTENCY_LIMIT = 0.40;
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -16,6 +17,20 @@ export default async function handler(req, res) {
   }
 
   try {
+    // --- Read reset date from Edge Config ---
+    let resetDate = null;
+    if (EDGE_CONFIG_ID && VERCEL_TOKEN) {
+      const ecRes = await fetch(
+        `https://api.vercel.com/v1/edge-config/${EDGE_CONFIG_ID}/item/evalResetDate`,
+        { headers: { Authorization: `Bearer ${VERCEL_TOKEN}` } }
+      );
+      if (ecRes.ok) {
+        const ecData = await ecRes.json();
+        resetDate = ecData.value || null;
+      }
+    }
+
+    // --- Fetch all pages from Notion ---
     let allPages = [];
     let cursor = undefined;
 
@@ -49,7 +64,7 @@ export default async function handler(req, res) {
       cursor = data.has_more ? data.next_cursor : undefined;
     } while (cursor);
 
-    // Parse trades
+    // --- Parse trades, filter by reset date ---
     const trades = allPages.map((page) => {
       const props = page.properties;
       const dateRaw = props?.["Date "]?.date?.start || props?.["Date"]?.date?.start || null;
@@ -57,7 +72,6 @@ export default async function handler(req, res) {
       const result = props?.["Result"]?.select?.name || null;
       const stopDistance = props?.["Stop Distance (pts)"]?.number ?? null;
 
-      // P&L = RR Traded * $500 (positive for win, negative for loss, 0 for BE)
       let pnl = null;
       if (rrTraded !== null && result) {
         if (result === "Win") pnl = rrTraded * RISK_PER_TRADE;
@@ -66,7 +80,9 @@ export default async function handler(req, res) {
       }
 
       return { date: dateRaw, pnl, result, stopDistance, rrTraded };
-    }).filter(t => t.date && t.pnl !== null);
+    })
+    .filter(t => t.date && t.pnl !== null)
+    .filter(t => !resetDate || t.date >= resetDate);
 
     // --- Total profit ---
     const totalProfit = trades.reduce((sum, t) => sum + t.pnl, 0);
@@ -79,26 +95,22 @@ export default async function handler(req, res) {
     }
 
     // --- Trailing EOD drawdown ---
-    // Build cumulative EOD account values
     const sortedDays = Object.keys(dailyPnL).sort();
     let runningBalance = ACCOUNT_START;
     let peakBalance = ACCOUNT_START;
-    let maxDrawdownHit = 0;
     let currentDrawdown = 0;
 
     for (const day of sortedDays) {
       runningBalance += dailyPnL[day];
       if (runningBalance > peakBalance) peakBalance = runningBalance;
-      const dd = peakBalance - runningBalance;
-      if (dd > maxDrawdownHit) maxDrawdownHit = dd;
-      currentDrawdown = dd;
+      currentDrawdown = peakBalance - runningBalance;
     }
+
     const drawdownRemaining = MAX_DRAWDOWN - currentDrawdown;
     const drawdownPct = Math.min((currentDrawdown / MAX_DRAWDOWN) * 100, 100);
     const drawdownWarning = drawdownRemaining <= 500;
 
     // --- Consistency rule ---
-    // No single day > 40% of total profit
     let biggestDayAmount = 0;
     let biggestDayDate = null;
     for (const [day, pnl] of Object.entries(dailyPnL)) {
@@ -108,14 +120,10 @@ export default async function handler(req, res) {
       }
     }
     const consistencyPct = totalProfit > 0 ? (biggestDayAmount / totalProfit) * 100 : 0;
-    const consistencyLimit = totalProfit * CONSISTENCY_LIMIT;
-    const consistencyWarning = consistencyPct >= 35; // warn at 35%, breach at 40%
+    const consistencyWarning = consistencyPct >= 35;
     const consistencyBreach = consistencyPct > 40;
 
-    // --- Risk flag: any trade with stop distance implying > $500 risk ---
-    // For NQ: 1 mini = $20/pt, so $500 / $20 = 25pt max stop
-    // For ES: 1 mini = $50/pt, so $500 / $50 = 10pt max stop
-    // We flag if stopDistance > 25 (conservative NQ threshold)
+    // --- Risk flag ---
     const riskyTrades = trades.filter(t => t.stopDistance !== null && t.stopDistance > 25);
 
     // --- Progress ---
@@ -129,31 +137,26 @@ export default async function handler(req, res) {
     const winRate = (wins + losses) > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : "0.0";
 
     return res.status(200).json({
-      // Profit
       totalProfit: Math.round(totalProfit),
       profitTarget: PROFIT_TARGET,
       progressPct: parseFloat(progressPct.toFixed(1)),
       profitRemaining: Math.round(profitRemaining),
-      // Drawdown
       currentDrawdown: Math.round(currentDrawdown),
       drawdownRemaining: Math.round(drawdownRemaining),
       drawdownPct: parseFloat(drawdownPct.toFixed(1)),
       drawdownWarning,
       peakBalance: Math.round(peakBalance),
-      // Consistency
       biggestDayAmount: Math.round(biggestDayAmount),
       biggestDayDate,
       consistencyPct: parseFloat(consistencyPct.toFixed(1)),
-      consistencyLimit: Math.round(consistencyLimit),
       consistencyWarning,
       consistencyBreach,
-      // Risk
       riskyTradeCount: riskyTrades.length,
-      // Stats
       wins, losses, bes,
       winRate,
       totalTrades: trades.length,
       accountBalance: Math.round(runningBalance),
+      resetDate,
     });
   } catch (e) {
     return res.status(500).json({ error: e.message });
