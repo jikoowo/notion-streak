@@ -228,9 +228,7 @@ async function load() {
     const profitColor = d.totalProfit >= 0 ? '#22c55e' : '#ef4444';
     const absPct = Math.min(Math.abs(d.progressPct), 100);
     const fillAmount = (absPct / 100) * CIRCUMFERENCE;
-    const donutOffset = d.totalProfit >= 0
-      ? CIRCUMFERENCE - fillAmount  // clockwise for positive
-      : CIRCUMFERENCE - fillAmount; // same math, but flip the SVG rotation
+    const donutOffset = CIRCUMFERENCE - fillAmount;
     const drawdownState = d.drawdownWarning ? 'danger' : (d.drawdownPct > 50 ? 'warn' : '');
     const consistencyState = d.consistencyBreach ? 'danger' : d.consistencyWarning ? 'warn' : 'ok';
     const drawdownBarColor = d.drawdownWarning ? '#ef4444' : d.drawdownPct > 50 ? '#f59e0b' : '#22c55e';
@@ -245,14 +243,15 @@ async function load() {
       </div>
 
       <div class="donut-wrap">
-        <svg width="180" height="180" viewBox="0 0 180 180" style="transform: rotate(-90deg) ${d.totalProfit < 0 ? 'scaleX(-1)' : ''}">
+        <svg width="180" height="180" viewBox="0 0 180 180" style="transform: rotate(-90deg)">
           <circle class="donut-bg" cx="90" cy="90" r="72"/>
           <circle class="donut-track" cx="90" cy="90" r="72"
             stroke="${profitColor}"
-            stroke-dasharray="${CIRCUMFERENCE}"
-            stroke-dashoffset="${donutOffset}"
-          />
-        </svg>
+            stroke-dasharray="${d.totalProfit >= 0 ? fillAmount + ' ' + CIRCUMFERENCE : CIRCUMFERENCE + ' ' + CIRCUMFERENCE}"
+            stroke-dashoffset="${d.totalProfit >= 0 ? 0 : -(CIRCUMFERENCE - fillAmount)}"
+            style="transform-origin: center; ${d.totalProfit < 0 ? 'transform: scaleX(-1)' : ''}"
+  />
+</svg>
         <div class="donut-center">
           <div class="donut-value" style="color:${profitColor}">${fmt(d.totalProfit)}</div>
           <div class="donut-sub">of $3,000</div>
