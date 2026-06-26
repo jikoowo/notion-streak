@@ -245,7 +245,7 @@ async function load() {
       </div>
 
       <div class="donut-wrap">
-        <svg width="180" height="180" viewBox="0 0 180 180" style="transform: ${d.totalProfit >= 0 ? 'rotate(-90deg)' : 'rotate(90deg)'}">
+        <svg width="180" height="180" viewBox="0 0 180 180" style="transform: rotate(-90deg) ${d.totalProfit < 0 ? 'scaleX(-1)' : ''}">
           <circle class="donut-bg" cx="90" cy="90" r="72"/>
           <circle class="donut-track" cx="90" cy="90" r="72"
             stroke="${profitColor}"
