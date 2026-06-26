@@ -221,7 +221,7 @@ async function load() {
         ? `Current eval started: <span>${d.resetDate}</span><br>Resetting will ignore all trades before today.`
         : `No reset set — showing all trades.<br>Resetting will start from today.`;
       resetBtn.disabled = false;
-      resetBtn.textContent = '🔄 Start New Eval';
+      resetBtn.textContent = 'Start New Eval';
       document.getElementById('resetSuccess').style.display = 'none';
     }
 
