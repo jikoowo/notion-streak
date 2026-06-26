@@ -6,7 +6,13 @@ const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const ACCOUNT_START = 50000;
 const PROFIT_TARGET = 3000;
 const MAX_DRAWDOWN = 2000;
-const RISK_PER_TRADE = 500;
+const MAX_RISK_PER_TRADE = 500;
+
+// Contract values per point
+const CONTRACT_VALUE = {
+  NQ: { Mini: 20, Micro: 2 },
+  ES: { Mini: 50, Micro: 5 },
+};
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -64,22 +70,54 @@ export default async function handler(req, res) {
       cursor = data.has_more ? data.next_cursor : undefined;
     } while (cursor);
 
-    // --- Parse trades, filter by reset date ---
+    // --- Parse trades ---
     const trades = allPages.map((page) => {
       const props = page.properties;
       const dateRaw = props?.["Date "]?.date?.start || props?.["Date"]?.date?.start || null;
-      const rrTraded = props?.["RR Traded"]?.number ?? null;
       const result = props?.["Result"]?.select?.name || null;
+      const asset = props?.["Asset"]?.select?.name || null; // "NQ" or "ES"
+      const contractType = props?.["Contract"]?.select?.name || null; // "Mini" or "Micro"
+      const numContracts = props?.["No. of Contracts"]?.number ?? null;
+      const entryPrice = props?.["Entry Price"]?.number ?? null;
+      const exitPrice = props?.["Exit Price"]?.number ?? null;
+      const position = props?.["Position"]?.select?.name || null; // "Long" or "Short"
       const stopDistance = props?.["Stop Distance (pts)"]?.number ?? null;
+      const rrTraded = props?.["RR Traded"]?.number ?? null;
 
+      // Calculate contract-based P&L
       let pnl = null;
-      if (rrTraded !== null && result) {
-        if (result === "Win") pnl = rrTraded * RISK_PER_TRADE;
-        else if (result === "Loss") pnl = -(rrTraded * RISK_PER_TRADE);
+      let contractPnl = null;
+
+      if (entryPrice !== null && exitPrice !== null && asset && contractType && numContracts) {
+        const pointValue = CONTRACT_VALUE[asset]?.[contractType] ?? null;
+        if (pointValue !== null) {
+          const priceDiff = position === "Short"
+            ? entryPrice - exitPrice
+            : exitPrice - entryPrice;
+          contractPnl = priceDiff * pointValue * numContracts;
+        }
+      }
+
+      // Use contract-based P&L as primary; fall back to result-based if missing
+      if (contractPnl !== null) {
+        pnl = contractPnl;
+      } else if (rrTraded !== null && result) {
+        // Fallback for trades without contract data
+        if (result === "Win") pnl = rrTraded * 500;
+        else if (result === "Loss") pnl = -(rrTraded * 500);
         else if (result === "Breakeven") pnl = 0;
       }
 
-      return { date: dateRaw, pnl, result, stopDistance, rrTraded };
+      // Risk flag: actual dollar risk = stop distance × point value × contracts
+      let actualRisk = null;
+      if (stopDistance !== null && asset && contractType && numContracts) {
+        const pointValue = CONTRACT_VALUE[asset]?.[contractType] ?? null;
+        if (pointValue !== null) {
+          actualRisk = stopDistance * pointValue * numContracts;
+        }
+      }
+
+      return { date: dateRaw, pnl, result, stopDistance, actualRisk, asset, contractType, numContracts };
     })
     .filter(t => t.date && t.pnl !== null)
     .filter(t => !resetDate || t.date >= resetDate);
@@ -123,8 +161,8 @@ export default async function handler(req, res) {
     const consistencyWarning = consistencyPct >= 35;
     const consistencyBreach = consistencyPct > 40;
 
-    // --- Risk flag ---
-    const riskyTrades = trades.filter(t => t.stopDistance !== null && t.stopDistance > 25);
+    // --- Risk flag: actual dollar risk > $500 ---
+    const riskyTrades = trades.filter(t => t.actualRisk !== null && t.actualRisk > MAX_RISK_PER_TRADE);
 
     // --- Progress ---
     const progressPct = Math.min((totalProfit / PROFIT_TARGET) * 100, 100);
