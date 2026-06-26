@@ -226,7 +226,9 @@ async function load() {
     }
 
     const profitColor = d.totalProfit >= 0 ? '#22c55e' : '#ef4444';
-    const absPct = Math.min(Math.abs(d.progressPct), 100);
+    const absPct = d.totalProfit >= 0
+      ? Math.min((d.totalProfit / 3000) * 100, 100)       // % toward $3,000 target
+      : Math.min((Math.abs(d.totalProfit) / 2000) * 100, 100); // % toward $2,000 drawdown limit
     const donutOffset = CIRCUMFERENCE - (absPct / 100) * CIRCUMFERENCE;
     const drawdownState = d.drawdownWarning ? 'danger' : (d.drawdownPct > 50 ? 'warn' : '');
     const consistencyState = d.consistencyBreach ? 'danger' : d.consistencyWarning ? 'warn' : 'ok';
@@ -253,7 +255,7 @@ async function load() {
         <div class="donut-center">
           <div class="donut-value" style="color:${profitColor}">${fmt(d.totalProfit)}</div>
           <div class="donut-sub">of $3,000</div>
-          <div class="donut-pct" style="color:${profitColor}">${d.progressPct}%</div>
+          <div class="donut-pct" style="color:${profitColor}">${d.totalProfit >= 0 ? ((d.totalProfit / 3000) * 100).toFixed(1) : ((Math.abs(d.totalProfit) / 2000) * 100).toFixed(1)}%</div>
         </div>
       </div>
 
