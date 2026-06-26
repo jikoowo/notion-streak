@@ -227,7 +227,10 @@ async function load() {
 
     const profitColor = d.totalProfit >= 0 ? '#22c55e' : '#ef4444';
     const absPct = Math.min(Math.abs(d.progressPct), 100);
-const donutOffset = CIRCUMFERENCE - (absPct / 100) * CIRCUMFERENCE;
+    const fillAmount = (absPct / 100) * CIRCUMFERENCE;
+    const donutOffset = d.totalProfit >= 0
+      ? CIRCUMFERENCE - fillAmount  // clockwise for positive
+      : CIRCUMFERENCE - fillAmount; // same math, but flip the SVG rotation
     const drawdownState = d.drawdownWarning ? 'danger' : (d.drawdownPct > 50 ? 'warn' : '');
     const consistencyState = d.consistencyBreach ? 'danger' : d.consistencyWarning ? 'warn' : 'ok';
     const drawdownBarColor = d.drawdownWarning ? '#ef4444' : d.drawdownPct > 50 ? '#f59e0b' : '#22c55e';
@@ -242,7 +245,7 @@ const donutOffset = CIRCUMFERENCE - (absPct / 100) * CIRCUMFERENCE;
       </div>
 
       <div class="donut-wrap">
-        <svg width="180" height="180" viewBox="0 0 180 180">
+        <svg width="180" height="180" viewBox="0 0 180 180" style="transform: ${d.totalProfit >= 0 ? 'rotate(-90deg)' : 'rotate(90deg)'}">
           <circle class="donut-bg" cx="90" cy="90" r="72"/>
           <circle class="donut-track" cx="90" cy="90" r="72"
             stroke="${profitColor}"
