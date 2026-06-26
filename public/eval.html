@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tradeify Eval Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f0f;
+      color: #fff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 20px;
+      padding: 28px 24px 24px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .header-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 4px;
+    }
+    .header-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #aaa;
+    }
+
+    /* Donut */
+    .donut-wrap {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 24px;
+    }
+    .donut-wrap svg { transform: rotate(-90deg); }
+    .donut-bg { fill: none; stroke: #1e1e1e; stroke-width: 18; }
+    .donut-track { fill: none; stroke-width: 18; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+    .donut-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .donut-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+    .donut-sub {
+      font-size: 10px;
+      color: #555;
+      margin-top: 4px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .donut-pct {
+      font-size: 12px;
+      font-weight: 600;
+      color: #22c55e;
+      margin-top: 2px;
+    }
+
+    /* Status bar */
+    .status-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .status-box {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #242424;
+      border-radius: 12px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+    .status-box.warn { border-color: #92400e; background: #1c1208; }
+    .status-box.danger { border-color: #7f1d1d; background: #1c0a0a; }
+    .status-box.ok { border-color: #14532d; background: #0a1c0e; }
+    .s-label { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #444; margin-bottom: 6px; }
+    .s-label.warn { color: #d97706; }
+    .s-label.danger { color: #ef4444; }
+    .s-label.ok { color: #22c55e; }
+    .s-value { font-size: 18px; font-weight: 700; color: #fff; }
+    .s-value.warn { color: #f59e0b; }
+    .s-value.danger { color: #ef4444; }
+    .s-value.ok { color: #22c55e; }
+    .s-sub { font-size: 9px; color: #444; margin-top: 3px; }
+
+    /* Progress bar */
+    .bar-wrap { margin-bottom: 14px; }
+    .bar-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .bar-label { font-size: 10px; color: #444; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+    .bar-val { font-size: 10px; color: #666; }
+    .bar-track { background: #1e1e1e; border-radius: 99px; height: 6px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+
+    /* Alert */
+    .alert {
+      background: #1c0a0a;
+      border: 1px solid #7f1d1d;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 11px;
+      color: #fca5a5;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .alert.warn {
+      background: #1c1208;
+      border-color: #92400e;
+      color: #fcd34d;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .stat-box {
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .stat-v { font-size: 16px; font-weight: 700; color: #fff; }
+    .stat-v.g { color: #22c55e; }
+    .stat-v.r { color: #ef4444; }
+    .stat-l { font-size: 9px; color: #444; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+
+    .divider { border: none; border-top: 1px solid #1e1e1e; margin: 14px 0; }
+
+    .refresh-btn {
+      width: 100%;
+      background: none;
+      border: 1px solid #222;
+      color: #444;
+      font-size: 10px;
+      padding: 8px;
+      border-radius: 99px;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover { border-color: #333; color: #666; }
+    .updated { text-align: center; font-size: 9px; color: #2a2a2a; margin-top: 8px; }
+
+    .loading { text-align: center; color: #333; padding: 40px; font-size: 13px; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .error { color: #ef4444; font-size: 12px; padding: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="loading">Loading eval data...</div>
+</div>
+
+<script>
+const API_URL = "/api/eval";
+const CIRCUMFERENCE = 2 * Math.PI * 72; // r=72
+
+function fmt(n) {
+  return (n >= 0 ? '+' : '') + '$' + Math.abs(n).toLocaleString();
+}
+function fmtPlain(n) {
+  return '$' + Math.abs(n).toLocaleString();
+}
+
+async function load() {
+  const card = document.getElementById("card");
+  card.innerHTML = `<div class="loading">Loading eval data...</div>`;
+
+  try {
+    const res = await fetch(API_URL);
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+
+    const profitColor = d.totalProfit >= 0 ? '#22c55e' : '#ef4444';
+    const donutOffset = CIRCUMFERENCE - (d.progressPct / 100) * CIRCUMFERENCE;
+
+    const drawdownState = d.drawdownWarning ? 'danger' : (d.drawdownPct > 50 ? 'warn' : '');
+    const consistencyState = d.consistencyBreach ? 'danger' : d.consistencyWarning ? 'warn' : 'ok';
+
+    const drawdownBarColor = d.drawdownWarning ? '#ef4444' : d.drawdownPct > 50 ? '#f59e0b' : '#22c55e';
+    const consistencyBarColor = d.consistencyBreach ? '#ef4444' : d.consistencyWarning ? '#f59e0b' : '#3b82f6';
+
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    card.innerHTML = `
+      <div class="header">
+        <div class="header-label">Tradeify Evaluation</div>
+        <div class="header-title">$50K Account · $3,000 Target</div>
+      </div>
+
+      <!-- Profit Donut -->
+      <div class="donut-wrap">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle class="donut-bg" cx="90" cy="90" r="72"/>
+          <circle class="donut-track" cx="90" cy="90" r="72"
+            stroke="${profitColor}"
+            stroke-dasharray="${CIRCUMFERENCE}"
+            stroke-dashoffset="${donutOffset}"
+          />
+        </svg>
+        <div class="donut-center">
+          <div class="donut-value" style="color:${profitColor}">${fmt(d.totalProfit)}</div>
+          <div class="donut-sub">of $3,000</div>
+          <div class="donut-pct" style="color:${profitColor}">${d.progressPct}%</div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      ${d.consistencyBreach ? `<div class="alert">⛔ Consistency breach! ${d.biggestDayDate} = ${fmtPlain(d.biggestDayAmount)} which is ${d.consistencyPct.toFixed(0)}% of total profit. Max allowed: 40%.</div>` : ''}
+      ${d.consistencyWarning && !d.consistencyBreach ? `<div class="alert warn">⚠️ Consistency near limit — best day is ${d.consistencyPct.toFixed(0)}% of total profit. Keep next sessions smaller.</div>` : ''}
+      ${d.drawdownWarning ? `<div class="alert">⛔ Drawdown danger! Only ${fmtPlain(d.drawdownRemaining)} left before breach.</div>` : ''}
+      ${d.riskyTradeCount > 0 ? `<div class="alert warn">⚠️ ${d.riskyTradeCount} trade${d.riskyTradeCount > 1 ? 's' : ''} may have risked more than $500 (stop > 25pts).</div>` : ''}
+
+      <!-- Status Row -->
+      <div class="status-row">
+        <div class="status-box ${drawdownState}">
+          <div class="s-label ${drawdownState}">Drawdown Used</div>
+          <div class="s-value ${drawdownState}">${fmtPlain(d.currentDrawdown)}</div>
+          <div class="s-sub">${fmtPlain(d.drawdownRemaining)} remaining</div>
+        </div>
+        <div class="status-box ${consistencyState}">
+          <div class="s-label ${consistencyState}">Best Day</div>
+          <div class="s-value ${consistencyState}">${d.consistencyPct.toFixed(0)}%</div>
+          <div class="s-sub">max 40% of profit</div>
+        </div>
+      </div>
+
+      <!-- Drawdown bar -->
+      <div class="bar-wrap">
+        <div class="bar-label-row">
+          <span class="bar-label">Trailing Drawdown</span>
+          <span class="bar-val">${fmtPlain(d.currentDrawdown)} / $2,000</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${d.drawdownPct}%;background:${drawdownBarColor}"></div>
+        </div>
+      </div>
+
+      <!-- Consistency bar -->
+      <div class="bar-wrap">
+        <div class="bar-label-row">
+          <span class="bar-label">Consistency</span>
+          <span class="bar-val">${d.consistencyPct.toFixed(1)}% / 40%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${Math.min(d.consistencyPct/40*100,100)}%;background:${consistencyBarColor}"></div>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-v g">${d.wins}</div>
+          <div class="stat-l">Wins</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-v r">${d.losses}</div>
+          <div class="stat-l">Losses</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-v">${d.winRate}%</div>
+          <div class="stat-l">Win Rate</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-v">${d.totalTrades}</div>
+          <div class="stat-l">Trades</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-v" style="color:#22c55e">${fmtPlain(d.accountBalance)}</div>
+          <div class="stat-l">Balance</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-v" style="color:#f59e0b">${fmtPlain(d.profitRemaining)}</div>
+          <div class="stat-l">To Target</div>
+        </div>
+      </div>
+
+      <button class="refresh-btn" onclick="load()">↻ Refresh</button>
+      <div class="updated">Last updated ${time}</div>
+    `;
+  } catch(e) {
+    card.innerHTML = `<div class="error">⚠️ ${e.message}<br><br><button class="refresh-btn" onclick="load()">Retry</button></div>`;
+  }
+}
+
+load();
+setInterval(load, 5 * 60 * 1000);
+</script>
+</body>
+</html>
