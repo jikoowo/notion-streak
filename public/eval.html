@@ -95,14 +95,14 @@
       margin: 0 auto 24px;
     }
     .donut-wrap svg { transform: rotate(-90deg); }
-    .donut-bg { fill: none; stroke: #1e1e1e; stroke-width: 12; }
+    .donut-bg { fill: none; stroke: #1e1e1e; stroke-width: 18; }
     .donut-track { fill: none; stroke-width: 18; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
     .donut-center {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       text-align: center;
     }
-    .donut-value { font-size: 28px; font-weight: 800; line-height: 1; }
+    .donut-value { font-size: 28px; font-weight: 800; color: #fff; line-height: 1; }
     .donut-sub { font-size: 10px; color: #555; margin-top: 4px; letter-spacing: 0.06em; text-transform: uppercase; }
     .donut-pct { font-size: 12px; font-weight: 600; margin-top: 2px; }
 
@@ -133,7 +133,6 @@
 
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
     .stat-box { background: #1a1a1a; border: 1px solid #222; border-radius: 10px; padding: 10px 8px; text-align: center; }
-    .stat-box.failed { border-color: #7f1d1d; background: #1c0a0a; }
     .stat-v { font-size: 16px; font-weight: 700; color: #fff; }
     .stat-v.g { color: #22c55e; }
     .stat-v.r { color: #ef4444; }
@@ -205,6 +204,8 @@ let currentResetDate = null;
 
 async function load() {
   const content = document.getElementById("content");
+  content.innerHTML = `<div class="loading">Loading eval data...</div>`;
+
   try {
     const res = await fetch(API_URL);
     const d = await res.json();
@@ -224,18 +225,14 @@ async function load() {
       document.getElementById('resetSuccess').style.display = 'none';
     }
 
-    const isBreached = d.drawdownRemaining < 0;
     const profitColor = d.totalProfit >= 0 ? '#22c55e' : '#ef4444';
-    
-    // DONUT TRACKING REFINE: Tracks current trailing drawdown percentage accurately when negative
     const absPct = d.totalProfit >= 0
-      ? Math.min((d.totalProfit / 3000) * 100, 100)
-      : (d.currentDrawdown / 2000) * 100;
-    const donutOffset = CIRCUMFERENCE - (Math.min(absPct, 100) / 100) * CIRCUMFERENCE;
-    
-    const drawdownState = isBreached ? 'danger' : (d.drawdownWarning ? 'warn' : 'ok');
+      ? Math.min((d.totalProfit / 3000) * 100, 100)       // % toward $3,000 target
+      : Math.min((Math.abs(d.totalProfit) / 2000) * 100, 100); // % toward $2,000 drawdown limit
+    const donutOffset = CIRCUMFERENCE - (absPct / 100) * CIRCUMFERENCE;
+    const drawdownState = d.drawdownWarning ? 'danger' : (d.drawdownPct > 50 ? 'warn' : '');
     const consistencyState = d.consistencyBreach ? 'danger' : d.consistencyWarning ? 'warn' : 'ok';
-    const drawdownBarColor = isBreached ? '#ef4444' : d.drawdownWarning ? '#f59e0b' : '#22c55e';
+    const drawdownBarColor = d.drawdownWarning ? '#ef4444' : d.drawdownPct > 50 ? '#f59e0b' : '#22c55e';
     const consistencyBarColor = d.consistencyBreach ? '#ef4444' : d.consistencyWarning ? '#f59e0b' : '#3b82f6';
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -247,34 +244,31 @@ async function load() {
       </div>
 
       <div class="donut-wrap">
-        <svg width="180" height="180" viewBox="0 0 180 180">
+        <svg width="180" height="180" viewBox="0 0 180 180" style="transform: rotate(-90deg)">
           <circle class="donut-bg" cx="90" cy="90" r="72"/>
           <circle class="donut-track" cx="90" cy="90" r="72"
             stroke="${profitColor}"
             stroke-dasharray="${CIRCUMFERENCE}"
-            stroke-dashoffset="${donutOffset}"
+            stroke-dashoffset="${d.totalProfit >= 0 ? donutOffset : -donutOffset}"
           />
         </svg>
         <div class="donut-center">
-          <div class="donut-value" style="color:${profitColor}">
-            ${d.totalProfit >= 0 ? fmt(d.totalProfit) : '-' + fmtPlain(d.currentDrawdown)}
-          </div>
+          <div class="donut-value" style="color:${profitColor}">${fmt(d.totalProfit)}</div>
           <div class="donut-sub">${d.totalProfit >= 0 ? 'of $3,000' : 'of $2,000'}</div>
-          <div class="donut-pct" style="color:${profitColor}">${absPct.toFixed(1)}%</div>
+          <div class="donut-pct" style="color:${profitColor}">${d.totalProfit >= 0 ? ((d.totalProfit / 3000) * 100).toFixed(1) : ((Math.abs(d.totalProfit) / 2000) * 100).toFixed(1)}%</div>
         </div>
       </div>
 
-      ${isBreached ? `<div class="alert">⛔ Account Breached! Trailing drawdown limit exceeded by ${fmtPlain(d.drawdownRemaining)}.</div>` : ''}
-      ${d.drawdownWarning && !isBreached ? `<div class="alert warn">⚠️ Drawdown danger! Only ${fmtPlain(d.drawdownRemaining)} left before breach.</div>` : ''}
       ${d.consistencyBreach ? `<div class="alert">⛔ Consistency breach! ${d.biggestDayDate} = ${fmtPlain(d.biggestDayAmount)} is ${d.consistencyPct.toFixed(0)}% of total profit. Max: 40%.</div>` : ''}
       ${d.consistencyWarning && !d.consistencyBreach ? `<div class="alert warn">⚠️ Consistency near limit — best day is ${d.consistencyPct.toFixed(0)}% of total profit.</div>` : ''}
+      ${d.drawdownWarning ? `<div class="alert">⛔ Drawdown danger! Only ${fmtPlain(d.drawdownRemaining)} left before breach.</div>` : ''}
       ${d.riskyTradeCount > 0 ? `<div class="alert warn">⚠️ ${d.riskyTradeCount} trade${d.riskyTradeCount > 1 ? 's' : ''} may have risked more than $500 (stop > 25pts).</div>` : ''}
 
       <div class="status-row">
         <div class="status-box ${drawdownState}">
           <div class="s-label ${drawdownState}">Drawdown Used</div>
           <div class="s-value ${drawdownState}">${fmtPlain(d.currentDrawdown)}</div>
-          <div class="s-sub ${isBreached ? 'danger' : ''}">${isBreached ? `${fmtPlain(d.drawdownRemaining)} over limit` : `${fmtPlain(d.drawdownRemaining)} remaining`}</div>
+          <div class="s-sub">${fmtPlain(d.drawdownRemaining)} remaining</div>
         </div>
         <div class="status-box ${consistencyState}">
           <div class="s-label ${consistencyState}">Best Day</div>
@@ -288,7 +282,7 @@ async function load() {
           <span class="bar-label">Trailing Drawdown</span>
           <span class="bar-val">${fmtPlain(d.currentDrawdown)} / $2,000</span>
         </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(d.drawdownPct, 100)}%;background:${drawdownBarColor}"></div></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${d.drawdownPct}%;background:${drawdownBarColor}"></div></div>
       </div>
 
       <div class="bar-wrap">
@@ -306,7 +300,7 @@ async function load() {
         <div class="stat-box"><div class="stat-v r">${d.losses}</div><div class="stat-l">Losses</div></div>
         <div class="stat-box"><div class="stat-v">${d.winRate}%</div><div class="stat-l">Win Rate</div></div>
         <div class="stat-box"><div class="stat-v">${d.totalTrades}</div><div class="stat-l">Trades</div></div>
-        <div class="stat-box ${isBreached ? 'failed' : ''}"><div class="stat-v" style="color:${isBreached ? '#ef4444' : '#22c55e'}">${fmtPlain(d.accountBalance)}</div><div class="stat-l">Balance</div></div>
+        <div class="stat-box"><div class="stat-v" style="color:#22c55e">${fmtPlain(d.accountBalance)}</div><div class="stat-l">Balance</div></div>
         <div class="stat-box"><div class="stat-v" style="color:#f59e0b">${fmtPlain(d.profitRemaining)}</div><div class="stat-l">To Target</div></div>
       </div>
 
