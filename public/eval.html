@@ -226,7 +226,8 @@ async function load() {
     }
 
     const profitColor = d.totalProfit >= 0 ? '#22c55e' : '#ef4444';
-    const donutOffset = CIRCUMFERENCE - (Math.max(d.progressPct, 0) / 100) * CIRCUMFERENCE;
+    const absPct = Math.min(Math.abs(d.progressPct), 100);
+const donutOffset = CIRCUMFERENCE - (absPct / 100) * CIRCUMFERENCE;
     const drawdownState = d.drawdownWarning ? 'danger' : (d.drawdownPct > 50 ? 'warn' : '');
     const consistencyState = d.consistencyBreach ? 'danger' : d.consistencyWarning ? 'warn' : 'ok';
     const drawdownBarColor = d.drawdownWarning ? '#ef4444' : d.drawdownPct > 50 ? '#f59e0b' : '#22c55e';
