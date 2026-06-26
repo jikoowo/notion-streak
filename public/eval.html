@@ -254,7 +254,7 @@ async function load() {
         </svg>
         <div class="donut-center">
           <div class="donut-value" style="color:${profitColor}">${fmt(d.totalProfit)}</div>
-          <div class="donut-sub">of $3,000</div>
+          <div class="donut-sub">${d.totalProfit >= 0 ? 'of $3,000' : 'of $2,000'}</div>
           <div class="donut-pct" style="color:${profitColor}">${d.totalProfit >= 0 ? ((d.totalProfit / 3000) * 100).toFixed(1) : ((Math.abs(d.totalProfit) / 2000) * 100).toFixed(1)}%</div>
         </div>
       </div>
