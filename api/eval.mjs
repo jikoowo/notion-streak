@@ -26,24 +26,13 @@ export default async function handler(req, res) {
     // --- Read reset date from Edge Config ---
     let resetDate = null;
     if (EDGE_CONFIG_ID && VERCEL_TOKEN) {
-      try {
-        // CLEANUP: Strip edge-config:// prefixes and extraction strings if present
-        const cleanId = EDGE_CONFIG_ID.replace(/^edge-config:\/\//, "").split("@")[0];
-
-        const ecRes = await fetch(
-          `https://api.vercel.com/v1/edge-config/${cleanId}/item/evalResetDate`,
-          { headers: { Authorization: `Bearer ${VERCEL_TOKEN}` } }
-        );
-        
-        if (ecRes.ok) {
-          const ecData = await ecRes.json();
-          resetDate = ecData.value || null;
-        } else {
-          console.error(`Edge Config API responded with status: ${ecRes.status}`);
-        }
-      } catch (ecError) {
-        // ISOLATED CATCH: If Edge Config fails, log it but don't crash the entire page!
-        console.error("Failed to read Edge Config safely:", ecError.message);
+      const ecRes = await fetch(
+        `https://api.vercel.com/v1/edge-config/${EDGE_CONFIG_ID}/item/evalResetDate`,
+        { headers: { Authorization: `Bearer ${VERCEL_TOKEN}` } }
+      );
+      if (ecRes.ok) {
+        const ecData = await ecRes.json();
+        resetDate = ecData.value || null;
       }
     }
 
