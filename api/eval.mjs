@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       };
 
       const response = await fetch(
-        `https://api.notion.com/v1/databases/${FORWARD_DB_ID}/query`,
+        `https://api.notion.com/v1/data_sources/${FORWARD_DB_ID}/query`,
         {
           method: "POST",
           headers: {
