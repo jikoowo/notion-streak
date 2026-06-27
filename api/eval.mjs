@@ -141,10 +141,9 @@ export default async function handler(req, res) {
         biggestDayDate = day;
       }
     }
-    const consistencyLimit = PROFIT_TARGET * 0.40; // $1,200
-    const consistencyPct = (biggestDayAmount / PROFIT_TARGET) * 100;
-    const consistencyWarning = biggestDayAmount >= consistencyLimit * 0.875; // warn at 35% of target ($1,050)
-    const consistencyBreach = biggestDayAmount > consistencyLimit; // breach above $1,200
+    const consistencyPct = totalProfit > 0 ? (biggestDayAmount / totalProfit) * 100 : 0;
+    const consistencyWarning = consistencyPct >= 35;
+    const consistencyBreach = consistencyPct > 40;
     
     const riskyTrades = trades.filter(t => t.actualRisk !== null && t.actualRisk > MAX_RISK_PER_TRADE);
     const profitRemaining = Math.max(PROFIT_TARGET - totalProfit, 0);
@@ -175,7 +174,6 @@ export default async function handler(req, res) {
       totalTrades: trades.length,
       accountBalance: Math.round(runningBalance),
       resetDate,
-      consistencyLimit: Math.round(consistencyLimit),
     });
   } catch (e) {
     return res.status(500).json({ error: e.message });
