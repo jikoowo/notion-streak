@@ -75,33 +75,36 @@ export default async function handler(req, res) {
       const contractType = props?.["Contract"]?.select?.name || null;
       const numContracts = props?.["No. of Contracts"]?.number ?? null;
       const entryPrice = props?.["Entry Price"]?.number ?? null;
-      const exitPrice = props?.["Exit Price"]?.number ?? null;
-      const position = props?.["Position"]?.select?.name || null;
+      const exitPrice = props?.["Exit Price"]?.number ?? null;       // stop loss level
+      const profitLevel = props?.["Profit Level"]?.number ?? null;   // take profit level
       const stopDistance = props?.["Stop Distance (pts)"]?.number ?? null;
       const rrTraded = props?.["RR Traded"]?.number ?? null;
 
       let pnl = null;
-      if (entryPrice !== null && exitPrice !== null && asset && contractType && numContracts) {
-        const pointValue = CONTRACT_VALUE[asset]?.[contractType] ?? null;
-        if (pointValue !== null) {
-          const priceDiff = position === "Short" ? entryPrice - exitPrice : exitPrice - entryPrice;
-          pnl = priceDiff * pointValue * numContracts;
-        }
-      }
+      const pointValue = asset && contractType ? (CONTRACT_VALUE[asset]?.[contractType] ?? null) : null;
 
-      if (pnl === null && rrTraded !== null && result) {
+      if (result === "Breakeven") {
+        pnl = 0;
+      } else if (result === "Win" && entryPrice !== null && profitLevel !== null && pointValue !== null && numContracts !== null) {
+        // Win: use |Profit Level - Entry Price| — always positive regardless of direction
+        pnl = Math.abs(profitLevel - entryPrice) * pointValue * numContracts;
+      } else if (result === "Loss" && entryPrice !== null && exitPrice !== null && pointValue !== null && numContracts !== null) {
+        // Loss: use |Exit Price - Entry Price| — always negative
+        pnl = -Math.abs(exitPrice - entryPrice) * pointValue * numContracts;
+      } else if (rrTraded !== null && result) {
+        // Fallback: RR × $500
         if (result === "Win") pnl = rrTraded * 500;
         else if (result === "Loss") pnl = -(rrTraded * 500);
         else if (result === "Breakeven") pnl = 0;
       }
 
+      // Risk flag: stop distance × point value × contracts
       let actualRisk = null;
-      if (stopDistance !== null && asset && contractType && numContracts) {
-        const pointValue = CONTRACT_VALUE[asset]?.[contractType] ?? null;
-        if (pointValue !== null) actualRisk = stopDistance * pointValue * numContracts;
+      if (stopDistance !== null && pointValue !== null && numContracts !== null) {
+        actualRisk = stopDistance * pointValue * numContracts;
       }
 
-      return { date: dateRaw, pnl, result, stopDistance, actualRisk, asset, contractType, numContracts };
+      return { date: dateRaw, pnl, result, actualRisk };
     })
     .filter(t => t.date && t.pnl !== null)
     .filter(t => !resetDate || t.date >= resetDate);
@@ -143,7 +146,6 @@ export default async function handler(req, res) {
     const consistencyBreach = consistencyPct > 40;
 
     const riskyTrades = trades.filter(t => t.actualRisk !== null && t.actualRisk > MAX_RISK_PER_TRADE);
-
     const profitRemaining = Math.max(PROFIT_TARGET - totalProfit, 0);
 
     const wins = trades.filter(t => t.result === "Win").length;
