@@ -261,7 +261,7 @@ async function load() {
 
       ${d.consistencyBreach ? `<div class="alert">⛔ Consistency breach! ${d.biggestDayDate} = ${fmtPlain(d.biggestDayAmount)} is ${d.consistencyPct.toFixed(0)}% of total profit. Max: 40%.</div>` : ''}
       ${d.consistencyWarning && !d.consistencyBreach ? `<div class="alert warn">⚠️ Consistency near limit — best day is ${d.consistencyPct.toFixed(0)}% of total profit.</div>` : ''}
-      ${d.drawdownWarning ? `<div class="alert">⛔ Drawdown danger! Only ${fmtPlain(d.drawdownRemaining)} left before breach.</div>` : ''}
+      ${d.accountBlown ? `<div class="alert">⛔ Account blown — drawdown limit exceeded! Reset to start a new eval.</div>` : ''} ${d.drawdownWarning && !d.accountBlown ? `<div class="alert">⚠️ Drawdown danger! Only ${fmtPlain(d.drawdownRemaining)} left before breach.</div>` : ''}
       ${d.riskyTradeCount > 0 ? `<div class="alert warn">⚠️ ${d.riskyTradeCount} trade${d.riskyTradeCount > 1 ? 's' : ''} may have risked more than $500.</div>` : ''}
 
       <div class="status-row">
