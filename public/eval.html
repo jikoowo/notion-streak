@@ -270,10 +270,10 @@ async function load() {
           <div class="s-value ${drawdownState}">${fmtPlain(d.currentDrawdown)}</div>
           <div class="s-sub">${fmtPlain(d.drawdownRemaining)} remaining</div>
         </div>
-        <div class="status-box ${consistencyState}">
-          <div class="s-label ${consistencyState}">Best Day</div>
-          <div class="s-value ${consistencyState}">${d.consistencyPct.toFixed(0)}%</div>
-          <div class="s-sub">max 40% of profit</div>
+        <div class="status-box ${d.totalProfit >= 1500 ? consistencyState : ''}" style="${d.totalProfit < 1500 ? 'opacity:0.35' : ''}">
+          <div class="s-label ${d.totalProfit >= 1500 ? consistencyState : ''}">Best Day</div>
+          <div class="s-value ${d.totalProfit >= 1500 ? consistencyState : ''}">${d.totalProfit < 1500 ? '—' : d.consistencyPct.toFixed(0) + '%'}</div>
+          <div class="s-sub">active after $1,500</div>
         </div>
       </div>
 
