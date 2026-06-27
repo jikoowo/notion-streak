@@ -285,12 +285,12 @@ async function load() {
         <div class="bar-track"><div class="bar-fill" style="width:${d.drawdownPct}%;background:${drawdownBarColor}"></div></div>
       </div>
 
-      <div class="bar-wrap">
+      <div class="bar-wrap" style="${d.totalProfit < 1500 ? 'opacity:0.35' : ''}">
         <div class="bar-label-row">
           <span class="bar-label">Consistency</span>
-          <span class="bar-val">${d.consistencyPct.toFixed(1)}% / 40%</span>
+          <span class="bar-val">${d.totalProfit < 1500 ? 'active after $1,500' : d.consistencyPct.toFixed(1) + '% / 40%'}</span>
         </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(d.consistencyPct/40*100,100)}%;background:${consistencyBarColor}"></div></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${d.totalProfit < 1500 ? 0 : Math.min(d.consistencyPct/40*100,100)}%;background:${consistencyBarColor}"></div></div>
       </div>
 
       <hr class="divider"/>
