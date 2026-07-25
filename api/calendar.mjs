@@ -97,13 +97,19 @@ export default async function handler(req, res) {
 
       if (pnl === null) continue;
 
-      if (!days[day]) days[day] = { pnl: 0, trades: 0 };
+      if (!days[day]) days[day] = { pnl: 0, trades: 0, wins: 0, losses: 0, rr: 0 };
       days[day].pnl += pnl;
       days[day].trades += 1;
+      if (result === "Win") days[day].wins += 1;
+      if (result === "Loss") days[day].losses += 1;
+      if (rrTraded !== null) days[day].rr += rrTraded;
     }
 
     for (const day of Object.keys(days)) {
       days[day].pnl = Math.round(days[day].pnl);
+      days[day].rr = parseFloat(days[day].rr.toFixed(2));
+      const wl = days[day].wins + days[day].losses;
+      days[day].winRate = wl > 0 ? Math.round((days[day].wins / wl) * 100) : null;
     }
 
     return res.status(200).json({ year, month, days });
