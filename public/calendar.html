@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trading Calendar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f0f;
+      color: #fff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px 16px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    /* Header */
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .cal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-btn {
+      background: none;
+      border: 1px solid #2a2a2a;
+      color: #666;
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover { border-color: #444; color: #aaa; }
+
+    /* Summary row */
+    .summary-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .summary-box {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+    .summary-val {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .summary-val.green { color: #22c55e; }
+    .summary-val.red { color: #ef4444; }
+    .summary-val.neutral { color: #fff; }
+    .summary-label {
+      font-size: 9px;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 3px;
+    }
+
+    /* Day headers */
+    .day-headers {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .day-header {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 0;
+    }
+
+    /* Calendar grid */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .cal-cell {
+      border-radius: 10px;
+      padding: 8px 6px;
+      min-height: 72px;
+      position: relative;
+      border: 1px solid #1e1e1e;
+      background: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+    }
+    .cal-cell.empty {
+      background: transparent;
+      border-color: transparent;
+    }
+    .cal-cell.today {
+      border-color: #444;
+    }
+    .cal-cell.green {
+      background: #0a1c0e;
+      border-color: #14532d;
+    }
+    .cal-cell.red {
+      background: #1c0a0a;
+      border-color: #7f1d1d;
+    }
+    .cal-cell.breakeven {
+      background: #111827;
+      border-color: #1e3a5f;
+    }
+
+    .cell-day {
+      font-size: 11px;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 4px;
+    }
+    .cal-cell.green .cell-day { color: #166534; }
+    .cal-cell.red .cell-day { color: #991b1b; }
+    .cal-cell.today .cell-day { color: #888; }
+
+    .cell-pnl {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-top: auto;
+    }
+    .cal-cell.green .cell-pnl { color: #22c55e; }
+    .cal-cell.red .cell-pnl { color: #ef4444; }
+    .cal-cell.breakeven .cell-pnl { color: #60a5fa; }
+
+    .cell-trades {
+      font-size: 9px;
+      color: #555;
+      margin-top: 2px;
+    }
+    .cal-cell.green .cell-trades { color: #166534; }
+    .cal-cell.red .cell-trades { color: #991b1b; }
+
+    .loading {
+      text-align: center;
+      color: #333;
+      padding: 60px;
+      font-size: 13px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .error { color: #ef4444; font-size: 12px; padding: 20px; text-align: center; }
+
+    .updated {
+      text-align: center;
+      font-size: 9px;
+      color: #222;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="cal-header">
+    <div class="cal-title" id="calTitle">Loading...</div>
+    <div class="cal-nav">
+      <button class="nav-btn" onclick="navigate(-1)">‹</button>
+      <button class="nav-btn" onclick="navigate(1)">›</button>
+    </div>
+  </div>
+  <div id="calBody"><div class="loading">Loading calendar...</div></div>
+</div>
+
+<script>
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+const now = new Date();
+let currentYear = now.getFullYear();
+let currentMonth = now.getMonth() + 1;
+
+function fmtPnl(n) {
+  const abs = Math.abs(n);
+  const str = abs >= 1000 ? `$${(abs/1000).toFixed(abs >= 10000 ? 1 : 2)}K` : `$${abs}`;
+  return (n >= 0 ? '+' : '-') + str;
+}
+
+function navigate(dir) {
+  currentMonth += dir;
+  if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+  if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+  load();
+}
+
+async function load() {
+  const body = document.getElementById('calBody');
+  const title = document.getElementById('calTitle');
+  title.textContent = `${MONTHS[currentMonth - 1]} ${currentYear}`;
+  body.innerHTML = `<div class="loading">Loading...</div>`;
+
+  try {
+    const res = await fetch(`/api/calendar?year=${currentYear}&month=${currentMonth}`);
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+
+    // Compute summary stats
+    const tradingDays = Object.values(d.days);
+    const totalPnl = tradingDays.reduce((s, x) => s + x.pnl, 0);
+    const greenDays = tradingDays.filter(x => x.pnl > 0).length;
+    const redDays = tradingDays.filter(x => x.pnl < 0).length;
+    const totalTrades = tradingDays.reduce((s, x) => s + x.trades, 0);
+    const winRate = (greenDays + redDays) > 0 ? ((greenDays / (greenDays + redDays)) * 100).toFixed(0) : 0;
+
+    // Build calendar grid
+    const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    let cells = '';
+
+    // Empty cells before month starts
+    for (let i = 0; i < firstDay; i++) {
+      cells += `<div class="cal-cell empty"></div>`;
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const data = d.days[dateStr];
+      const isToday = dateStr === todayStr;
+
+      let cellClass = isToday ? 'today' : '';
+      let pnlHtml = '';
+      let tradesHtml = '';
+
+      if (data) {
+        if (data.pnl > 0) cellClass = 'green';
+        else if (data.pnl < 0) cellClass = 'red';
+        else cellClass = 'breakeven';
+
+        pnlHtml = `<div class="cell-pnl">${fmtPnl(data.pnl)}</div>`;
+        tradesHtml = `<div class="cell-trades">${data.trades} trade${data.trades !== 1 ? 's' : ''}</div>`;
+      }
+
+      cells += `
+        <div class="cal-cell ${cellClass}">
+          <div class="cell-day">${day}</div>
+          ${pnlHtml}
+          ${tradesHtml}
+        </div>`;
+    }
+
+    const pnlColor = totalPnl > 0 ? 'green' : totalPnl < 0 ? 'red' : 'neutral';
+
+    body.innerHTML = `
+      <div class="summary-row">
+        <div class="summary-box">
+          <div class="summary-val ${pnlColor}">${fmtPnl(totalPnl)}</div>
+          <div class="summary-label">Month P&L</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-val neutral">${winRate}%</div>
+          <div class="summary-label">Day Win Rate</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-val green">${greenDays}</div>
+          <div class="summary-label">Green Days</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-val red">${redDays}</div>
+          <div class="summary-label">Red Days</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-val neutral">${totalTrades}</div>
+          <div class="summary-label">Trades</div>
+        </div>
+      </div>
+
+      <div class="day-headers">
+        ${DAYS.map(d => `<div class="day-header">${d}</div>`).join('')}
+      </div>
+
+      <div class="cal-grid">${cells}</div>
+      <div class="updated">Updated ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+    `;
+  } catch(e) {
+    body.innerHTML = `<div class="error">⚠️ ${e.message}</div>`;
+  }
+}
+
+load();
+</script>
+</body>
+</html>
