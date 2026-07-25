@@ -6,22 +6,28 @@
   <title>Trading Calendar</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    html, body {
       background: #0f0f0f;
       color: #fff;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      height: 100%;
+      width: 100%;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
       min-height: 100vh;
-      padding: 24px 20px;
+      padding: 20px;
     }
 
     .card {
       background: #141414;
       border: 1px solid #1e1e1e;
-      border-radius: 24px;
-      padding: 28px;
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto;
+      border-radius: 20px;
+      padding: 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     /* Header */
@@ -29,7 +35,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
     }
     .cal-title {
       font-size: 22px;
@@ -39,15 +46,14 @@
     }
     .cal-nav {
       display: flex;
-      align-items: center;
       gap: 8px;
     }
     .nav-btn {
       background: #1a1a1a;
       border: 1px solid #2a2a2a;
       color: #666;
-      width: 34px; height: 34px;
-      border-radius: 10px;
+      width: 32px; height: 32px;
+      border-radius: 9px;
       cursor: pointer;
       font-size: 16px;
       display: flex; align-items: center; justify-content: center;
@@ -58,152 +64,126 @@
     /* Summary row */
     .summary-row {
       display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
     }
     .summary-box {
       flex: 1;
       background: #1a1a1a;
       border: 1px solid #1e1e1e;
-      border-radius: 14px;
-      padding: 14px 10px;
+      border-radius: 12px;
+      padding: 12px 8px;
       text-align: center;
     }
-    .summary-val {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
+    .summary-val { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
     .summary-val.green { color: #22c55e; }
     .summary-val.red { color: #ef4444; }
     .summary-val.neutral { color: #fff; }
-    .summary-label {
-      font-size: 9px;
-      color: #3a3a3a;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-top: 4px;
-      font-weight: 600;
-    }
+    .summary-label { font-size: 9px; color: #333; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 3px; font-weight: 600; }
 
     /* Day headers */
     .day-headers {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-      margin-bottom: 5px;
+      gap: 4px;
+      margin-bottom: 4px;
+      flex-shrink: 0;
     }
     .day-header {
       text-align: center;
       font-size: 10px;
       font-weight: 700;
-      color: #333;
+      color: #2a2a2a;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      padding: 6px 0;
+      padding: 5px 0;
     }
 
-    /* Calendar grid */
+    /* Calendar grid — grows to fill remaining space */
     .cal-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
+      gap: 4px;
+      flex: 1;
     }
+
     .cal-cell {
-      border-radius: 14px;
-      padding: 10px 10px 12px;
-      min-height: 90px;
-      position: relative;
+      border-radius: 12px;
+      padding: 10px;
       border: 1px solid #1e1e1e;
       background: #1a1a1a;
       display: flex;
       flex-direction: column;
-      transition: transform 0.1s;
+      min-height: 80px;
+      position: relative;
     }
-    .cal-cell:not(.empty):hover { transform: scale(1.02); }
-    .cal-cell.empty {
-      background: transparent;
-      border-color: transparent;
-    }
-    .cal-cell.today {
-      border-color: #333;
-      background: #1e1e1e;
-    }
-    .cal-cell.green {
-      background: linear-gradient(145deg, #0d1f12, #0a1a0e);
-      border-color: #14532d;
-    }
-    .cal-cell.red {
-      background: linear-gradient(145deg, #1f0d0d, #1a0a0a);
-      border-color: #7f1d1d;
-    }
-    .cal-cell.breakeven {
-      background: linear-gradient(145deg, #0d1520, #0a1018);
-      border-color: #1e3a5f;
-    }
+    .cal-cell.empty { background: transparent; border-color: transparent; }
+    .cal-cell.today { border-color: #333; background: #1e1e1e; }
+    .cal-cell.green { background: linear-gradient(145deg, #0d1f12, #0a1a0e); border-color: #14532d; }
+    .cal-cell.red { background: linear-gradient(145deg, #1f0d0d, #1a0a0a); border-color: #7f1d1d; }
+    .cal-cell.breakeven { background: linear-gradient(145deg, #0d1520, #0a1018); border-color: #1e3a5f; }
 
+    /* Day number top-left */
     .cell-day {
       font-size: 11px;
       font-weight: 700;
       color: #2a2a2a;
-      margin-bottom: auto;
+      flex-shrink: 0;
     }
     .cal-cell.green .cell-day { color: #166534; }
     .cal-cell.red .cell-day { color: #7f1d1d; }
     .cal-cell.breakeven .cell-day { color: #1e3a5f; }
     .cal-cell.today .cell-day { color: #555; }
 
-    .cell-bottom { margin-top: auto; }
-
-    .cell-pnl {
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      line-height: 1;
-    }
-    .cal-cell.green .cell-pnl { color: #22c55e; }
-    .cal-cell.red .cell-pnl { color: #ef4444; }
-    .cal-cell.breakeven .cell-pnl { color: #60a5fa; }
-
-    .cell-trades {
-      font-size: 9px;
-      font-weight: 600;
-      color: #2a2a2a;
-      margin-top: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-    .cal-cell.green .cell-trades { color: #14532d; }
-    .cal-cell.red .cell-trades { color: #7f1d1d; }
-    .cal-cell.breakeven .cell-trades { color: #1e3a5f; }
-
-    /* Today indicator dot */
+    /* Today dot */
     .today-dot {
       width: 5px; height: 5px;
-      background: #555;
+      background: #444;
       border-radius: 50%;
       position: absolute;
       top: 10px; right: 10px;
     }
 
-    .loading {
-      text-align: center;
-      color: #2a2a2a;
-      padding: 80px;
-      font-size: 13px;
-      animation: pulse 1.5s ease-in-out infinite;
+    /* Center section — P&L */
+    .cell-center {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+    .cell-pnl {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-align: center;
+    }
+    .cal-cell.green .cell-pnl { color: #22c55e; }
+    .cal-cell.red .cell-pnl { color: #ef4444; }
+    .cal-cell.breakeven .cell-pnl { color: #60a5fa; }
+
+    /* Bottom section — stats aligned right */
+    .cell-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+      flex-shrink: 0;
+    }
+    .cell-stat {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .cal-cell.green .cell-stat { color: #14532d; }
+    .cal-cell.red .cell-stat { color: #7f1d1d; }
+    .cal-cell.breakeven .cell-stat { color: #1e3a5f; }
+
+    .loading { text-align: center; color: #2a2a2a; padding: 80px; font-size: 13px; animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .error { color: #ef4444; font-size: 12px; padding: 20px; text-align: center; }
-
-    .updated {
-      text-align: center;
-      font-size: 9px;
-      color: #1e1e1e;
-      margin-top: 20px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
+    .updated { text-align: center; font-size: 9px; color: #1e1e1e; margin-top: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -215,7 +195,7 @@
       <button class="nav-btn" onclick="navigate(1)">›</button>
     </div>
   </div>
-  <div id="calBody"><div class="loading">Loading calendar...</div></div>
+  <div id="calBody" style="display:contents"><div class="loading">Loading calendar...</div></div>
 </div>
 
 <script>
@@ -282,11 +262,21 @@ async function load() {
         else if (data.pnl < 0) cellClass = 'red';
         else cellClass = 'breakeven';
 
+        const rrStr = data.rr > 0 ? `${data.rr}R` : null;
+        const wrStr = data.winRate !== null ? `${data.winRate}% WR` : null;
+        const trStr = `${data.trades}T`;
+
         inner = `
-          <div class="cell-bottom">
+          <div class="cell-center">
             <div class="cell-pnl">${fmtPnl(data.pnl)}</div>
-            <div class="cell-trades">${data.trades} trade${data.trades !== 1 ? 's' : ''}</div>
+          </div>
+          <div class="cell-bottom">
+            ${wrStr ? `<div class="cell-stat">${wrStr}</div>` : ''}
+            ${rrStr ? `<div class="cell-stat">${rrStr}</div>` : ''}
+            <div class="cell-stat">${trStr}</div>
           </div>`;
+      } else {
+        inner = `<div class="cell-center"></div>`;
       }
 
       cells += `
@@ -322,11 +312,9 @@ async function load() {
           <div class="summary-label">Total Trades</div>
         </div>
       </div>
-
       <div class="day-headers">
         ${DAYS.map(d => `<div class="day-header">${d}</div>`).join('')}
       </div>
-
       <div class="cal-grid">${cells}</div>
       <div class="updated">Updated ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
     `;
