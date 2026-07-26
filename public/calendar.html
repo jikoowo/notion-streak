@@ -7,7 +7,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      background: #191919;
+      background: #0f0f0f;
       color: #fff;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       height: 100%;
@@ -145,36 +145,29 @@
       top: 10px; right: 10px;
     }
 
-    /* Center section — P&L */
-    .cell-center {
+    /* Right-aligned content column */
+    .cell-right {
       flex: 1;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-end;
+      gap: 2px;
     }
     .cell-pnl {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       letter-spacing: -0.02em;
-      text-align: center;
+      text-align: right;
     }
     .cal-cell.green .cell-pnl { color: #22c55e; }
     .cal-cell.red .cell-pnl { color: #ef4444; }
     .cal-cell.breakeven .cell-pnl { color: #60a5fa; }
-
-    /* Bottom section — stats aligned right */
-    .cell-bottom {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 1px;
-      flex-shrink: 0;
-    }
     .cell-stat {
       font-size: 9px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      text-align: right;
+      letter-spacing: 0.04em;
     }
     .cal-cell.green .cell-stat { color: #14532d; }
     .cal-cell.red .cell-stat { color: #7f1d1d; }
@@ -262,21 +255,20 @@ async function load() {
         else if (data.pnl < 0) cellClass = 'red';
         else cellClass = 'breakeven';
 
-        const rrStr = data.rr > 0 ? `${data.rr}R` : null;
-        const wrStr = data.winRate !== null ? `${data.winRate}% WR` : null;
-        const trStr = `${data.trades}T`;
+        const rrWrStr = [
+          data.rr > 0 ? `${data.rr}RR` : null,
+          data.winRate !== null ? `${data.winRate}%` : null
+        ].filter(Boolean).join(' · ');
+        const trStr = `${data.trades} trade${data.trades !== 1 ? 's' : ''}`;
 
         inner = `
-          <div class="cell-center">
+          <div class="cell-right">
             <div class="cell-pnl">${fmtPnl(data.pnl)}</div>
-          </div>
-          <div class="cell-bottom">
-            ${wrStr ? `<div class="cell-stat">${wrStr}</div>` : ''}
-            ${rrStr ? `<div class="cell-stat">${rrStr}</div>` : ''}
             <div class="cell-stat">${trStr}</div>
+            ${rrWrStr ? `<div class="cell-stat">${rrWrStr}</div>` : ''}
           </div>`;
       } else {
-        inner = `<div class="cell-center"></div>`;
+        inner = `<div class="cell-right"></div>`;
       }
 
       cells += `
