@@ -9,7 +9,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      background: #191919;
+      background: #0f0f0f;
       color: #fff;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       height: 100%;
@@ -155,7 +155,6 @@
       align-items: flex-end;
       justify-content: flex-end;
       gap: 2px;
-      padding-bottom: 20px;
     }
     .cell-pnl {
       font-size: 15px;
@@ -294,13 +293,21 @@ async function load() {
           <div class="summary-val neutral">${winRate}%</div>
           <div class="summary-label">Day Win Rate</div>
         </div>
-        <div class="summary-box">
-          <div class="summary-val green">${greenDays}</div>
-          <div class="summary-label">Green Days</div>
+        <div class="summary-box" style="flex:2">
+          <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;margin-bottom:6px;">
+            <span class="summary-val green">+$${d.avgWin || 0}</span>
+            <span style="font-size:10px;color:#333">/</span>
+            <span class="summary-val red">-$${d.avgLoss || 0}</span>
+          </div>
+          <div style="display:flex;height:4px;border-radius:99px;overflow:hidden;gap:2px;margin:0 8px 4px;">
+            <div style="flex:${d.avgWin || 1};background:#22c55e;border-radius:99px 0 0 99px"></div>
+            <div style="flex:${d.avgLoss || 1};background:#ef4444;border-radius:0 99px 99px 0"></div>
+          </div>
+          <div class="summary-label">Avg Win / Loss</div>
         </div>
         <div class="summary-box">
-          <div class="summary-val red">${redDays}</div>
-          <div class="summary-label">Red Days</div>
+          <div class="summary-val ${d.profitFactor >= 1 ? 'green' : 'red'}">${d.profitFactor ?? '—'}</div>
+          <div class="summary-label">Profit Factor</div>
         </div>
         <div class="summary-box">
           <div class="summary-val neutral">${totalTrades}</div>
