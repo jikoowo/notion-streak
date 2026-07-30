@@ -4,6 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Trading Calendar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -153,25 +155,21 @@
       align-items: flex-end;
       justify-content: flex-end;
       gap: 2px;
-      padding-bottom: 14px;
-    }
     }
     .cell-pnl {
-      font-size: 18px;
-      font-weight: 900;
+      font-size: 15px;
+      font-weight: 800;
       letter-spacing: -0.02em;
       text-align: right;
-      text-shadow: 0 0 20px currentColor;
     }
     .cal-cell.green .cell-pnl { color: #22c55e; }
     .cal-cell.red .cell-pnl { color: #ef4444; }
     .cal-cell.breakeven .cell-pnl { color: #60a5fa; }
     .cell-stat {
       font-size: 9px;
-      font-weight: 700;
+      font-weight: 600;
       text-align: right;
       letter-spacing: 0.04em;
-      text-transform: uppercase;
     }
     .cal-cell.green .cell-stat { color: #14532d; }
     .cal-cell.red .cell-stat { color: #7f1d1d; }
