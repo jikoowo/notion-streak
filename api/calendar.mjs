@@ -97,13 +97,26 @@ export default async function handler(req, res) {
 
       if (pnl === null) continue;
 
-      if (!days[day]) days[day] = { pnl: 0, trades: 0, wins: 0, losses: 0, rr: 0 };
+      if (!days[day]) days[day] = { pnl: 0, trades: 0, wins: 0, losses: 0, rr: 0, winPnl: 0, lossPnl: 0 };
       days[day].pnl += pnl;
       days[day].trades += 1;
-      if (result === "Win") days[day].wins += 1;
-      if (result === "Loss") days[day].losses += 1;
+      if (result === "Win") { days[day].wins += 1; days[day].winPnl += pnl; }
+      if (result === "Loss") { days[day].losses += 1; days[day].lossPnl += pnl; }
       if (rrTraded !== null) days[day].rr += rrTraded;
     }
+
+    // Compute monthly aggregate stats
+    const allDays = Object.values(days);
+    let totalWins = 0, totalLosses = 0, totalWinPnl = 0, totalLossPnl = 0;
+    for (const d of allDays) {
+      totalWins += d.wins;
+      totalLosses += d.losses;
+      totalWinPnl += d.winPnl;
+      totalLossPnl += d.lossPnl;
+    }
+    const avgWin = totalWins > 0 ? Math.round(totalWinPnl / totalWins) : 0;
+    const avgLoss = totalLosses > 0 ? Math.round(Math.abs(totalLossPnl) / totalLosses) : 0;
+    const profitFactor = totalLossPnl !== 0 ? parseFloat((totalWinPnl / Math.abs(totalLossPnl)).toFixed(2)) : null;
 
     for (const day of Object.keys(days)) {
       days[day].pnl = Math.round(days[day].pnl);
@@ -112,7 +125,7 @@ export default async function handler(req, res) {
       days[day].winRate = wl > 0 ? Math.round((days[day].wins / wl) * 100) : null;
     }
 
-    return res.status(200).json({ year, month, days });
+    return res.status(200).json({ year, month, days, avgWin, avgLoss, profitFactor });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
