@@ -77,8 +77,12 @@
       border-radius: 12px;
       padding: 12px 8px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    .summary-val { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
+    .summary-val { font-size: 17px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; letter-spacing: -0.02em; }
     .summary-val.green { color: #22c55e; }
     .summary-val.red { color: #ef4444; }
     .summary-val.neutral { color: #fff; }
@@ -155,6 +159,7 @@
       align-items: flex-end;
       justify-content: flex-end;
       gap: 2px;
+      padding-bottom: 28px;
     }
     .cell-pnl {
       font-size: 15px;
@@ -180,22 +185,25 @@
     .error { color: #ef4444; font-size: 12px; padding: 20px; text-align: center; }
     .updated { text-align: center; font-size: 9px; color: #1e1e1e; margin-top: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0; }
 
-    /* Mobile responsive */
     @media (max-width: 600px) {
-      body { padding: 10px; }
-      .card { padding: 14px 10px; border-radius: 16px; }
-      .cal-title { font-size: 17px; }
-      .nav-btn { width: 28px; height: 28px; font-size: 14px; }
-      .summary-row { flex-wrap: wrap; gap: 6px; }
-      .summary-box { flex: 1 1 calc(50% - 6px); min-width: 0; padding: 10px 6px; border-radius: 10px; }
-      .summary-val { font-size: 14px; }
-      .summary-label { font-size: 8px; }
-      .day-header { font-size: 8px; letter-spacing: 0; }
-      .cal-cell { min-height: 54px; padding: 6px 5px; border-radius: 8px; }
+      body { padding: 8px; }
+      .card { padding: 14px 10px; border-radius: 14px; }
+      .cal-title { font-size: 16px; }
+      .nav-btn { width: 26px; height: 26px; font-size: 13px; border-radius: 7px; }
+      .cal-header { margin-bottom: 12px; }
+      .summary-row { flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+      .summary-box { flex: 1 1 calc(50% - 3px); min-width: 0; padding: 10px 6px; border-radius: 10px; }
+      .summary-val { font-size: 13px; }
+      .summary-label { font-size: 7px; margin-top: 2px; }
+      .day-headers { gap: 3px; margin-bottom: 3px; }
+      .day-header { font-size: 8px; letter-spacing: 0; padding: 3px 0; }
+      .cal-grid { gap: 3px; }
+      .cal-cell { min-height: 52px; padding: 5px 5px; border-radius: 8px; }
       .cell-day { font-size: 9px; }
-      .cell-pnl { font-size: 11px; }
-      .cell-stat { font-size: 7px; letter-spacing: 0; }
+      .cell-pnl { font-size: 10px; }
+      .cell-stat { font-size: 6.5px; letter-spacing: 0; }
       .cell-right { gap: 1px; padding-bottom: 4px; }
+      .today-dot { width: 4px; height: 4px; top: 5px; right: 5px; }
     }
   </style>
 </head>
@@ -311,7 +319,7 @@ async function load() {
           <div class="summary-val neutral">${winRate}%</div>
           <div class="summary-label">Day Win Rate</div>
         </div>
-        <div class="summary-box" style="flex:2">
+        <div class="summary-box" style="flex:2;display:block">
           <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;margin-bottom:6px;">
             <span class="summary-val green">+$${d.avgWin || 0}</span>
             <span style="font-size:10px;color:#333">/</span>
