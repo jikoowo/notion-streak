@@ -193,6 +193,7 @@
       .cal-header { margin-bottom: 12px; }
       .summary-row { flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
       .summary-box { flex: 1 1 calc(50% - 3px); min-width: 0; padding: 10px 6px; border-radius: 10px; }
+      .summary-box[style*="flex:2"] { flex: 1 1 calc(50% - 3px) !important; }
       .summary-val { font-size: 13px; }
       .summary-label { font-size: 7px; margin-top: 2px; }
       .day-headers { gap: 3px; margin-bottom: 3px; }
@@ -200,8 +201,8 @@
       .cal-grid { gap: 3px; }
       .cal-cell { min-height: 52px; padding: 5px 5px; border-radius: 8px; }
       .cell-day { font-size: 9px; }
-      .cell-pnl { font-size: 10px; }
-      .cell-stat { font-size: 6.5px; letter-spacing: 0; }
+      .cell-pnl { font-size: 10px; white-space: nowrap; }
+      .cell-stat { font-size: 6.5px; letter-spacing: 0; white-space: nowrap; }
       .cell-right { gap: 1px; padding-bottom: 4px; }
       .today-dot { width: 4px; height: 4px; top: 5px; right: 5px; }
     }
@@ -332,7 +333,7 @@ async function load() {
           <div class="summary-label">Avg Win / Loss</div>
         </div>
         <div class="summary-box">
-          <div class="summary-val ${d.profitFactor >= 1 ? 'green' : 'red'}">${d.profitFactor ?? '—'}</div>
+          <div class="summary-val ${!d.profitFactor ? 'neutral' : d.profitFactor >= 1 ? 'green' : 'red'}">${(!d.profitFactor || d.profitFactor === 0) ? '—' : d.profitFactor}</div>
           <div class="summary-label">Profit Factor</div>
         </div>
         <div class="summary-box">
